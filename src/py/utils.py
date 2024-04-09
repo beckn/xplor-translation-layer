@@ -8,6 +8,8 @@ import argostranslate.package
 import argostranslate.translate
 import pandas as pd
 from functools import lru_cache, wraps
+import warnings
+warnings.filterwarnings("ignore")
 
 
 #############################################################################################################
@@ -19,27 +21,24 @@ from functools import lru_cache, wraps
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='../app.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def log_function_data(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
+
         end_time = time.time()
         execution_time = end_time - start_time
         
-        # Log the function's input (arguments and keyword arguments)
-        logging.info(f"Executing {func.__name__} with args: {args}, kwargs: {kwargs}")
-        
-        # Log the function's output
-        logging.info(f"{func.__name__} returned: {result}")
+        # Log the demarcation 
+        logging.info(f"--------------------------------------------------------------------")
+        # Log the function's input (arguments and keyword arguments) & function's output
+        logging.info(f"Executing {func.__name__} with args: {args}, kwargs: {kwargs} and function returned:  {result} ")    
         
         # Log the execution time
         logging.info(f"{func.__name__} execution time: {execution_time:.4f} seconds")
-        
-        # Log the time of execution
-        logging.info(f"{func.__name__} was executed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         return result
     return wrapper

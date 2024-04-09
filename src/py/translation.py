@@ -1,10 +1,13 @@
 ## File for the Translation Service
-
-from py.utils import *
 import json
 from typing import Union
 
-#@log_function_data
+import sys
+sys.path.append('.')
+from utils import *
+
+
+@log_function_data
 def translate_input(input_data: Union[str, dict], from_ln: str, to_ln: str) -> Union[str, dict]:
     """
     Translates the given input text from the source language to the target language.
