@@ -41,6 +41,18 @@ To run the tests, use the following command:
 pytest -p no:warnings
 ```
 
+
+
+## Explanation of Dockerfile Commands:
+
+- FROM: This line specifies the base image to use for the Docker container, in this case, Python 3.11.3 on a slim Debian-based image.
+- WORKDIR: Sets the working directory inside the container. All following commands will be run from this directory.
+- COPY: Copies the application files from your project's directory into the container.
+- RUN: Installs the Python dependencies specified in requirements.txt. The --no-cache-dir option is used to keep the image size smaller by not storing the cache.
+- EXPOSE: Makes the specified port available to the network. This is where Uvicorn will serve the application.
+- CMD: The default command to run when the container starts. Here it runs the Uvicorn server with the FastAPI app.
+
+
 ## Tech Stack
 
 [FastAPI](https://fastapi.tiangolo.com/) - The web framework used
