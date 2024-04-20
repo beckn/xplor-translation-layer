@@ -24,6 +24,13 @@ pip install -r requirements.txt
 uvicorn src.app:app --reload
 ```
 
+
+# Run the project using Docker
+
+```sh
+docker build -t xplor-ai-services .
+docker run -p 8000:8000 xplor-ai-services
+```
 ## Project Structure
 
 The main application is in the [src/app.py]() file. The translation functionality is implemented in the [src/py/translation.py]() file. Unit tests are located in the [src/tests]() directory.
