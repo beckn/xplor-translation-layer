@@ -15,3 +15,4 @@ build:
     - docker push asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA
     - docker logout https://asia.gcr.io/dev-translator
     - docker image prune -af
+    - echo "Image Tag- asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA"
