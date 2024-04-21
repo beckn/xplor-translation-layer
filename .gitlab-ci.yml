@@ -14,3 +14,4 @@ build:
     - docker build --platform=linux/amd64 --pull -t "asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA" .
     - docker push asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA
     - docker logout https://asia.gcr.io/dev-translator
+    - docker image prune -af
