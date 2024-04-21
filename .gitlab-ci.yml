@@ -9,6 +9,6 @@ build:
   script:
     - echo $TAG_ID
     #- cat $gcp_key | docker login -u _json_key --password-stdin https://asia.gcr.io
-    - docker build --platform=linux/amd64 --pull -t "asia-south1-docker.pkg.dev/xplor-ai-services:$TAG_ID" .
+    - docker build --platform=linux/amd64 --pull -t "asia-south1-docker.pkg.dev/xplor-ai-services" .
     - docker image ls
     #- docker push asia-south1-docker.pkg.dev/$GCP_PROJECT_NAME/adapter-dashboard-trpc/dashboard:$TAG_ID
