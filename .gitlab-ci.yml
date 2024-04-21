@@ -12,4 +12,4 @@ build:
     - echo "$xplor_json_key" >> key.json
     - cat key.json | docker login -u _json_key --password-stdin https://asia.gcr.io/dev-translator
     - docker build --platform=linux/amd64 --pull -t "asia-south1-docker.pkg.dev/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA" .
-    - docker push asia-south1-docker.pkg.dev/xplor-ai-services-translator/$CI_COMMIT_SHORT_SHA
+    - docker push asia-south1-docker.pkg.dev/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA
