@@ -21,10 +21,10 @@ spec:
         name: dev-translator-backend
         resources:
           requests:
-            cpu: "2000m"
+            cpu: "1000m"
             memory: "6000Mi"
           limits:
-            cpu: "2000m" 
+            cpu: "1500m" 
             memory: "6000Mi"
         ports:
         - containerPort: 8000

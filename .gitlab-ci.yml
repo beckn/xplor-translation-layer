@@ -20,6 +20,7 @@ build:
 deploy:
   when: manual
   stage: deploy
+  extends: 
   tags:
     - gcp
   only:
