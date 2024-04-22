@@ -20,7 +20,6 @@ build:
 deploy:
   when: manual
   stage: deploy
-  extends: 
   tags:
     - gcp
   only:
@@ -35,3 +34,6 @@ deploy:
     - kubectl apply -f deployment.yaml
     - echo -e "
       Dev Translator Backend URL:- https://translator-dev.thewitslab.com/"
+
+    ## Deploying 'ingress' in Namespace
+    - kubectl apply -f ingress.yaml
