@@ -18,10 +18,19 @@ build:
     - echo "Image Tag- asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA"
 
 deploy:
+  when: manual
   stage: deploy
   tags:
     - gcp
   only:
     - gcp_dev
   script:
-    - echo "Hello"
+    ## Creating Namespace
+    - kubectl apply -f namespace.yaml
+
+    ## Deploying 'dev-translator-backend' in Namespace
+    - sed "s/latest/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml > deployment.tmp
+    - mv deployment.tmp deployment.yaml
+    - kubectl apply -f deployment.yaml
+    - echo -e "
+      Dev Translator Backend URL:- https://translator-dev.thewitslab.com/"
