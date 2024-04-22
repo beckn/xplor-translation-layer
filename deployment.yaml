@@ -24,8 +24,8 @@ spec:
             cpu: "1000m"
             memory: "6000Mi"
           limits:
-            cpu: "1500m" 
-            memory: "6000Mi"
+            cpu: "2000m" 
+            memory: "10000Mi"
         ports:
         - containerPort: 8000
 
@@ -38,7 +38,7 @@ metadata:
   name: translator-autoscaling
   namespace: dev-translator
 spec:
-  maxReplicas: 2
+  maxReplicas: 1
   minReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
