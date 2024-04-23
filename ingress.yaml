@@ -16,8 +16,8 @@ spec:
   - host: "translator-dev.thewitslab.com"
     http:
       paths:
-      - path: "/"
-        pathType: "Prefix"
+      - path: "/*"
+        pathType: "ImplementationSpecific"
         backend:
           service:
             name: "translator-svc"

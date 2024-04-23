@@ -16,7 +16,7 @@ spec:
         app: dev-translator-backend
     spec:
       containers:
-      - image: asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:latest
+      - image: asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:4f5a6cea
         imagePullPolicy: Always
         name: dev-translator-backend
         resources:
@@ -28,7 +28,6 @@ spec:
             memory: "10000Mi"
         ports:
         - containerPort: 8000
-          protocol: TCP
 
 ---
 apiVersion: autoscaling/v2
@@ -60,14 +59,10 @@ metadata:
   labels:
     app: dev-translator-backend
   name: translator-svc
-  annotations:
-    cloud.google.com/neg: '{"ingress": true}'
   namespace: dev-translator
 spec:
   ports:
-  - port: 8000
-    nodePort: 32171
-    protocol: TCP
+  - port: 80
     targetPort: 8000
   selector:
     app: dev-translator-backend
