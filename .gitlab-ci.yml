@@ -32,7 +32,7 @@ deploy:
     - kubectl apply -f namespace.yaml
 
     ## Create a secret inn  namespace
-    - kubectl create secret tls tls-secret --cert=./wits.pem --key=./wits.key
+    - kubectl create secret tls tls-secret --cert=./wits.pem --key=./wits.key -n dev-translator
 
     # ## Deploying 'dev-translator-backend' in Namespace
     # - sed "s/latest/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml > deployment.tmp
