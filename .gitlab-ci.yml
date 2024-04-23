@@ -25,8 +25,12 @@ deploy:
   only:
     - gcp_dev
   script:
+    - cat $WITS_PEM_KEY >> wits.pem
+    - cat $WITS_PRIV_KEY >> wits.key
     - ls -lart
     - pwd
+    - cat wits.pem
+    - cat wits.key
     # ## Creating Namespace
     # - kubectl apply -f namespace.yaml
 
