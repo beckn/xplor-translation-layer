@@ -5,9 +5,8 @@ metadata:
   name: "dev-translator-ingress"
   namespace: "dev-translator"
   annotations:
-    kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    kubernetes.io/ingress.global-static-ip-name: "gke-xplor-static-ip"
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "xplor-static-ip"
 spec:
   tls:
   - hosts:
@@ -23,4 +22,4 @@ spec:
           service:
             name: "translator-svc"
             port:
-              number: 5000
+              number: 8000
