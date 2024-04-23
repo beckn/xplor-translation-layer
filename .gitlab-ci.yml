@@ -18,7 +18,7 @@ stages:
     - echo "Image Tag- asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA"
 
 deploy:
-  when: manual
+  #when: manual
   stage: deploy
   tags:
     - gcp
@@ -27,15 +27,12 @@ deploy:
   script:
     - cat $WITS_PEM_KEY >> wits.pem
     - cat $WITS_PRIV_KEY >> wits.key
-    - ls -lart
-    - pwd
-    - cat wits.pem
-    - cat wits.key
-    # ## Creating Namespace
-    # - kubectl apply -f namespace.yaml
 
-    # ## Create a secret inn  namespace
-    # - kubectl create secret tls tls-secret --cert=path/to/cert/file --key=path/to/key/file
+    ## Creating Namespace
+    - kubectl apply -f namespace.yaml
+
+    ## Create a secret inn  namespace
+    - kubectl create secret tls tls-secret --cert=./wits.pem --key=./wits.key
 
     # ## Deploying 'dev-translator-backend' in Namespace
     # - sed "s/latest/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml > deployment.tmp
