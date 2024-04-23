@@ -31,7 +31,7 @@ deploy:
     ## Creating Namespace
     - kubectl apply -f namespace.yaml
 
-    ## Create a secret inn  namespace
+    ## Creating a secret in Namespace
     - kubectl create secret tls tls-secret --cert=./wits.pem --key=./wits.key -n dev-translator
 
     # ## Deploying 'dev-translator-backend' in Namespace
@@ -41,5 +41,5 @@ deploy:
     # - echo -e "
     #   Dev Translator Backend URL:- https://translator-dev.thewitslab.com/"
 
-    # ## Deploying 'ingress' in Namespace
-    # - kubectl apply -f ingress.yaml
+    ## Deploying 'ingress' in Namespace
+    - kubectl apply -f ingress.yaml
