@@ -64,6 +64,7 @@ spec:
   ports:
   - port: 80
     targetPort: 8000
+    nodePort: 32171
   selector:
     app: dev-translator-backend
   type: NodePort
