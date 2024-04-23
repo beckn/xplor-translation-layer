@@ -2,7 +2,7 @@ stages:
   - build
   - deploy
 
-build:
+.build:
   stage: build
   tags:
     - gcp
@@ -25,15 +25,20 @@ deploy:
   only:
     - gcp_dev
   script:
-    ## Creating Namespace
-    - kubectl apply -f namespace.yaml
+    - ls -lart
+    - pwd
+    # ## Creating Namespace
+    # - kubectl apply -f namespace.yaml
 
-    ## Deploying 'dev-translator-backend' in Namespace
-    - sed "s/latest/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml > deployment.tmp
-    - mv deployment.tmp deployment.yaml
-    - kubectl apply -f deployment.yaml
-    - echo -e "
-      Dev Translator Backend URL:- https://translator-dev.thewitslab.com/"
+    # ## Create a secret inn  namespace
+    # - kubectl create secret tls tls-secret --cert=path/to/cert/file --key=path/to/key/file
 
-    ## Deploying 'ingress' in Namespace
-    - kubectl apply -f ingress.yaml
+    # ## Deploying 'dev-translator-backend' in Namespace
+    # - sed "s/latest/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml > deployment.tmp
+    # - mv deployment.tmp deployment.yaml
+    # - kubectl apply -f deployment.yaml
+    # - echo -e "
+    #   Dev Translator Backend URL:- https://translator-dev.thewitslab.com/"
+
+    # ## Deploying 'ingress' in Namespace
+    # - kubectl apply -f ingress.yaml
