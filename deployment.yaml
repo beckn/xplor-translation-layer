@@ -28,6 +28,19 @@ spec:
             memory: "10000Mi"
         ports:
         - containerPort: 8000
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 10
 
 ---
 apiVersion: autoscaling/v2
@@ -62,9 +75,9 @@ metadata:
   namespace: dev-translator
 spec:
   ports:
-  - port: 80
+  - port: 5000
     targetPort: 8000
-    nodePort: 32171
+    protocol: TCP
   selector:
     app: dev-translator-backend
   type: NodePort
