@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "dev-translator-ingress"
+  namespace: "dev-translator"
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "xplor-static-ip"
+spec:
+  tls:
+  - hosts:
+    - "translator-dev.thewitslab.com"
+    secretName: "tls-secret"
+  rules:
+  - host: "translator-dev.thewitslab.com"
+    http:
+      paths:
+      - path: "/"
+        pathType: "Prefix"
+        backend:
+          service:
+            name: "translator-svc"
+            port:
+              number: 80
