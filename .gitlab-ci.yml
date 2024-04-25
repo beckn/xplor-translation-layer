@@ -18,7 +18,6 @@ build:
     - echo "Image Tag- asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA"
 
 deploy:
-  when: manual
   stage: deploy
   tags:
     - gcp
