@@ -2,14 +2,21 @@
 ## Contains all the reusable functions 
 
 import logging
+import requests
 import time
 from datetime import datetime
 import argostranslate.package
 import argostranslate.translate
 import pandas as pd
 from functools import lru_cache, wraps
+from config import *
 import warnings
 warnings.filterwarnings("ignore")
+
+#############################################################################################################
+
+userID = bhashini_userID
+ulcaApiKey = bhashini_ulcaApiKey
 
 
 #############################################################################################################
@@ -58,6 +65,51 @@ def log_function_data(func):
 #                                   UTILS FOR TRANSLATION MODULE                                            #
 #############################################################################################################
 #############################################################################################################
+
+
+argos_languages = {
+"Arabic": "ar",
+"Chinese": "zh",
+"English": "en",
+"French": "fr",
+"German": "de",
+"Hindi": "hi",
+"Italian": "it",
+"Japanese": "ja",
+"Polish": "pl",
+"Portuguese": "pt",
+"Turkish": "tr",
+"Russian": "ru",
+"Spanish": "es"
+}
+
+bhashini_languages = {
+    "Hindi": "hi",
+    "Gom": "gom",
+    "Kannada": "kn",
+    "Dogri": "doi",
+    "Bodo": "brx",
+    "Urdu": "ur",
+    "Tamil": "ta",
+    "Kashmiri": "ks",
+    "Assamese": "as",
+    "Bengali": "bn",
+    "Marathi": "mr",
+    "Sindhi": "sd",
+    "Maithili": "mai",
+    "Punjabi": "pa",
+    "Malayalam": "ml",
+    "Manipuri": "mni",
+    "Telugu": "te",
+    "Sanskrit": "sa",
+    "Nepali": "ne",
+    "Santali": "sat",
+    "Gujarati": "gu",
+    "Odia": "or"
+  }
+
+#############################################################################################################
+
 
 @lru_cache(maxsize=128)
 def install_translation_package(from_code : str = "en", to_code : str = None ) -> bool:
@@ -156,18 +208,52 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
 #############################################################################################################
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> dict:
+    """Translates text from source language to target language using the Bhashini API.
+    Args:
+        text (str): The text to translate.
+        from_code (str): Source language code. Default is 'en' (English).
+        to_code (str): Target language code. Default is 'te' (Telugu).
+        user_id (str): User ID for the API.
+        api_key (str): API key for authentication.
+    Returns:
+        dict: A dictionary with the status code, message, and translated text or error info.
+    """
+    url = 'https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline'
+    headers = {
+        "Content-Type": "application/json",
+        "userID": user_id,
+        "ulcaApiKey": api_key
+    }
+#####    
+    payload = {
+        "pipelineTasks": [{"taskType": "translation", "config": {"language": {"sourceLanguage": from_code, "targetLanguage": to_code}}}],
+        "pipelineRequestConfig": {"pipelineId" : "64392f96daac500b55c543cd"}
+    }
+##### 
+    response = requests.post(url, json=payload, headers=headers)
+    if response.status_code != 200:
+        return {"status_code": response.status_code, "message": "Error in translation request", "translated_content": None}
+#####
+    response_data = response.json()
+    service_id = response_data["pipelineResponseConfig"][0]["config"][0]["serviceId"]
+    callback_url = response_data["pipelineInferenceAPIEndPoint"]["callbackUrl"]
+    headers2 = {
+        "Content-Type": "application/json",
+        response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["name"]: response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["value"]
+    }
+#####
+    compute_payload = {
+        "pipelineTasks": [{"taskType": "translation", "config": {"language": {"sourceLanguage": from_code, "targetLanguage": to_code}, "serviceId": service_id}}],
+        "inputData": {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+    }
+#####
+    compute_response = requests.post(callback_url, json=compute_payload, headers=headers2)
+    if compute_response.status_code != 200:
+        return {"status_code": compute_response.status_code, "message": "Error in translation", "translated_content": None}
+#####
+    compute_response_data = compute_response.json()
+    translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+#####
+    return {"status_code": 200, "message": "Translation successful", "translated_content": translated_content}
