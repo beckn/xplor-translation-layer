@@ -84,6 +84,7 @@ argos_languages = {
 }
 
 bhashini_languages = {
+    "English": "en",
     "Hindi": "hi",
     "Gom": "gom",
     "Kannada": "kn",
@@ -107,6 +108,89 @@ bhashini_languages = {
     "Gujarati": "gu",
     "Odia": "or"
   }
+
+
+#############################################################################################################
+
+def get_language_code(input_language):
+    """
+    Retrieves the ISO language code for a given language name or code. This function supports
+    languages listed in two dictionaries, handling variations in capitalization and recognizing
+    both full names and short codes. If the language is not recognized, it returns a notification
+    that the language is not supported.
+    Args:
+    input_language (str): The name of the language or its ISO code which could be in any case
+                          (e.g., 'English', 'en', 'ENGLISH', 'En').
+    Returns:
+    str: The ISO code for the language if found (e.g., 'en' for English); otherwise,
+         a string indicating that the language is not supported.
+    Example usage:
+    >>> get_language_code("English")
+    'en'
+    >>> get_language_code("en")
+    'en'
+    >>> get_language_code("HINDI")
+    'hi'
+    >>> get_language_code("german")
+    'de'
+    >>> get_language_code("xyz")
+    'Language not supported.'
+    """
+    # Combine both language dictionaries
+    combined_languages = {
+        **argos_languages,
+        **bhashini_languages
+    }
+    # Normalize the keys to handle different cases and create a reverse map for codes
+    normalized_languages = {}
+    for full_name, code in combined_languages.items():
+        # Normalize full language names
+        normalized_languages[full_name.lower()] = code
+        # Map code to itself for reverse lookup
+        normalized_languages[code.lower()] = code
+    # Convert the input to lowercase for case-insensitive comparison
+    input_language_normalized = input_language.lower()
+    # Look up the input language in the normalized dictionary
+    if input_language_normalized in normalized_languages:
+        return normalized_languages[input_language_normalized]
+    else:
+        return "Language not supported."
+
+#############################################################################################################
+
+def select_translation_service(from_code, to_code):
+    """
+    Determines which translation service to use based on the provided source and target language codes.
+    Args:
+    from_code (str): The ISO code of the source language.
+    to_code (str): The ISO code of the target language.
+    Returns:
+    str: A string indicating the translation service to use ("argos", "bhashini", or "combination").
+    # Example usage
+    print(select_translation_service("fr", "de"))  # Output: argos
+    print(select_translation_service("hi", "gom"))  # Output: bhashini
+    print(select_translation_service("ja", "ml"))  # Output: combination
+    print(select_translation_service("ru", "sv"))  # Output: Unsupported language combination
+    """
+    # Language codes for Argos and Bhashini
+    argos_codes = {"ar", "zh", "en", "fr", "de", "hi", "it", "ja", "pl", "pt", "tr", "ru", "es"}
+    bhashini_codes = {"en", "hi", "gom", "kn", "doi", "brx", "ur", "ta", "ks", "as", "bn", "mr", "sd", "mai", "pa", "ml", "mni", "te", "sa", "ne", "sat", "gu", "or"}
+    # Convert codes to lowercase to ensure case insensitivity
+    from_code = from_code.lower()
+    to_code = to_code.lower()
+    # Determine the appropriate service
+    if from_code in argos_codes and to_code in argos_codes:
+        return "argos"
+    elif from_code in bhashini_codes and to_code in bhashini_codes:
+        return "bhashini"
+    elif from_code in argos_codes and to_code in bhashini_codes:
+        return "a_b"
+    elif from_code in bhashini_codes and to_code in argos_codes:
+        return "b_a"
+    else:
+        return "Unsupported language combination"
+
+
 
 #############################################################################################################
 
@@ -251,9 +335,9 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
 #####
     compute_response = requests.post(callback_url, json=compute_payload, headers=headers2)
     if compute_response.status_code != 200:
-        return {"status_code": compute_response.status_code, "message": "Error in translation", "translated_content": None}
+        return "Error in translation"
 #####
     compute_response_data = compute_response.json()
     translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
 #####
-    return {"status_code": 200, "message": "Translation successful", "translated_content": translated_content}
+    return translated_content

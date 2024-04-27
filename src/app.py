@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Union
 
 import sys
-sys.path.append('py/.')
+sys.path.append('src/py/.')
 from translation import *
 
 
