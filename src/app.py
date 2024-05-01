@@ -19,7 +19,8 @@ app = FastAPI(
     redoc_url="/redocs",
     openapi_url="/api/v1/openapi.json",
     openapi_tags=[{"name": "healthcheck", "description": "Healthcheck operations"},
-                  {"name": "translation", "description": "Translation operations"}]
+                  {"name": "translation", "description": "Translation operations"},
+                  {"name": "supportingLanguages", "description": "Supported languages"}]
 )
 
 
@@ -43,6 +44,14 @@ def date_check():
     """
     
     return {"date": current_datetime}
+@app.get("/supported_languages", tags=["supportingLanguages"])
+def get_supported_languages():
+    """
+    Endpoint to get the list of all supported languages along with their ISO codes.
+    """
+    from src.py.utils import argos_languages, bhashini_languages
+    supported_languages = {**argos_languages, **bhashini_languages}
+    return {"supported_languages": supported_languages}
 
 #################################################################################################################
 #                                   Translate                                                                   #
