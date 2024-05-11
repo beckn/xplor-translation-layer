@@ -86,7 +86,8 @@ async def generate_api_key_route(user_id: str):
 #################################################################################################################
 
 @app.get("/supported_languages", tags=["supportingLanguages"])
-def get_supported_languages(credentials: Dict[str, str] = Depends(check_api_key)):
+#def get_supported_languages(credentials: Dict[str, str] = Depends(check_api_key)):
+def get_supported_languages():
     """
     Endpoint to get the list of all supported languages along with their ISO codes.
     """
@@ -103,7 +104,8 @@ class TranslationRequest(BaseModel):
 
 
 @app.post("/translate/", tags=["translation"])
-def translate(request: TranslationRequest, credentials: Dict[str, str] = Depends(check_api_key)):
+#def translate(request: TranslationRequest, credentials: Dict[str, str] = Depends(check_api_key)):
+def translate(request: TranslationRequest):
     """
     Translates the provided text from the source language to the target language.
     Accepts both plain text and JSON as input.
