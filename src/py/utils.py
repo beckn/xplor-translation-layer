@@ -68,21 +68,36 @@ def log_function_data(func):
 
 
 argos_languages = {
-"Arabic": "ar",
-"Chinese": "zh",
-"English": "en",
-"French": "fr",
-"German": "de",
-#"Hindi": "hi",
-"Italian": "it",
-"Japanese": "ja",
-"Polish": "pl",
-"Portuguese": "pt",
-"Turkish": "tr",
-"Russian": "ru",
-"Spanish": "es"
+    "Arabic": "ar",
+    "Azerbaijani": "az",
+    "Catalan": "ca",
+    "Chinese": "zh",
+    "Czech": "cs",
+    "Danish": "da",
+    "Dutch": "nl",
+    "English": "en",
+    "Esperanto": "eo",
+    "Finnish": "fi",
+    "French": "fr",
+    "German": "de",
+    "Greek": "el",
+    "Hebrew": "he",
+    "Hungarian": "hu",
+    "Indonesian": "id",
+    "Irish": "ga",
+    "Italian": "it",
+    "Japanese": "ja",
+    "Korean": "ko",
+    "Persian": "fa",
+    "Polish": "pl",
+    "Portuguese": "pt",
+    "Russian": "ru",
+    "Slovak": "sk",
+    "Spanish": "es",
+    "Swedish": "sv",
+    "Turkish": "tr",
+    "Ukrainian": "uk"
 }
-
 bhashini_languages = {
     "English": "en",
     "Hindi": "hi",
@@ -173,7 +188,7 @@ def select_translation_service(from_code, to_code):
     print(select_translation_service("ru", "sv"))  # Output: Unsupported language combination
     """
     # Language codes for Argos and Bhashini
-    argos_codes = {"ar", "zh", "en", "fr", "de", "it", "ja", "pl", "pt", "tr", "ru", "es"}
+    argos_codes = {"ar", "az", "ca", "zh", "cs", "da", "nl", "en", "eo", "fi", "fr", "de", "el", "he","hu", "id", "ga", "it", "ja", "ko", "fa", "pl", "pt", "ru", "sk", "es", "sv", "tr", "uk"}
     bhashini_codes = {"en", "hi", "gom", "kn", "doi", "brx", "ur", "ta", "ks", "as", "bn", "mr", "sd", "mai", "pa", "ml", "mni", "te", "sa", "ne", "sat", "gu", "or"}
     # Convert codes to lowercase to ensure case insensitivity
     from_code = from_code.lower()
