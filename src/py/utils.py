@@ -73,7 +73,7 @@ argos_languages = {
 "English": "en",
 "French": "fr",
 "German": "de",
-"Hindi": "hi",
+#"Hindi": "hi",
 "Italian": "it",
 "Japanese": "ja",
 "Polish": "pl",
@@ -173,7 +173,7 @@ def select_translation_service(from_code, to_code):
     print(select_translation_service("ru", "sv"))  # Output: Unsupported language combination
     """
     # Language codes for Argos and Bhashini
-    argos_codes = {"ar", "zh", "en", "fr", "de", "hi", "it", "ja", "pl", "pt", "tr", "ru", "es"}
+    argos_codes = {"ar", "zh", "en", "fr", "de", "it", "ja", "pl", "pt", "tr", "ru", "es"}
     bhashini_codes = {"en", "hi", "gom", "kn", "doi", "brx", "ur", "ta", "ks", "as", "bn", "mr", "sd", "mai", "pa", "ml", "mni", "te", "sa", "ne", "sat", "gu", "or"}
     # Convert codes to lowercase to ensure case insensitivity
     from_code = from_code.lower()
@@ -304,6 +304,7 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
     Returns:
         dict: A dictionary with the status code, message, and translated text or error info.
     """
+    print("bhasini")
     url = 'https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline'
     headers = {
         "Content-Type": "application/json",
