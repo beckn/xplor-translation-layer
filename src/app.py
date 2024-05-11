@@ -1,3 +1,7 @@
+from fastapi import FastAPI, HTTPException, Depends, Security, Request
+from fastapi.security.api_key import APIKeyQuery, APIKeyHeader, APIKey
+from typing import Dict
+from hashlib import sha256
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -25,6 +29,8 @@ app = FastAPI(
 
 
 current_datetime = datetime.now()
+# Define your private key (keep it secret)
+PRIVATE_KEY = "da98faf9sf3qF0A9FSAsdfadsf5sdf78f90as0f8df6dsg432f32s5D8F7SA9DR6G485"
 #################################################################################################################
 #                                   Health Check                                                                #
 #################################################################################################################
@@ -53,9 +59,91 @@ def get_supported_languages():
     supported_languages = {**argos_languages, **bhashini_languages}
     return {"supported_languages": supported_languages}
 
+
+#################################################################################################################
+#                                   Authentication                                                              #
+#################################################################################################################
+
+
+# Function to generate API key dynamically
+def generate_api_key(user_id: str) -> str:
+    concatenated_key = f"{user_id}-{PRIVATE_KEY}"
+    hashed_key = sha256(concatenated_key.encode()).hexdigest()
+    return hashed_key
+
+# Function to validate API key
+def validate_api_key(user_id: str, api_key: str) -> bool:
+    return api_key == generate_api_key(user_id)
+
+
+# Dependency to validate API key
+def check_api_key( user_id: str, api_key: str) -> Dict[str, str]:
+    if validate_api_key( user_id, api_key):
+        return {"user_id": user_id, "api_key": api_key}
+    else:
+        raise HTTPException(status_code=403, detail="Invalid API key")
+
+
+# Route to generate API key dynamically
+@app.get("/generate-api-key/{user_id}",tags=["Authorisation"], include_in_schema=False)
+async def generate_api_key_route(user_id: str):
+    api_key = generate_api_key(user_id)
+    return {"user_id": user_id, "api_key": api_key}
 #################################################################################################################
 #                                   Translate                                                                   #
 #################################################################################################################
+
+@app.get("/language_list/", tags=["translation"])
+def lang_list(credentials: Dict[str, str] = Depends(check_api_key)):
+    '''
+    Get all the languages supported
+    '''
+    return {
+  "argos_languages": {
+    "Arabic": "ar",
+    "Chinese": "zh",
+    "English": "en",
+    "French": "fr",
+    "German": "de",
+    "Italian": "it",
+    "Japanese": "ja",
+    "Polish": "pl",
+    "Portuguese": "pt",
+    "Turkish": "tr",
+    "Russian": "ru",
+    "Spanish": "es"
+  },
+  "bhashini_languages": {
+    "English": "en",
+    "Hindi": "hi",
+    "Gom": "gom",
+    "Kannada": "kn",
+    "Dogri": "doi",
+    "Bodo": "brx",
+    "Urdu": "ur",
+    "Tamil": "ta",
+    "Kashmiri": "ks",
+    "Assamese": "as",
+    "Bengali": "bn",
+    "Marathi": "mr",
+    "Sindhi": "sd",
+    "Maithili": "mai",
+    "Punjabi": "pa",
+    "Malayalam": "ml",
+    "Manipuri": "mni",
+    "Telugu": "te",
+    "Sanskrit": "sa",
+    "Nepali": "ne",
+    "Santali": "sat",
+    "Gujarati": "gu",
+    "Odia": "or"
+  }
+}
+
+
+
+
+################################################################################################################
 class TranslationRequest(BaseModel):
     text: Union[str, dict]
     from_ln: str
@@ -63,7 +151,7 @@ class TranslationRequest(BaseModel):
 
 
 @app.post("/translate/", tags=["translation"])
-def translate(request: TranslationRequest):
+def translate(request: TranslationRequest, credentials: Dict[str, str] = Depends(check_api_key)):
     """
     Translates the provided text from the source language to the target language.
     Accepts both plain text and JSON as input.
