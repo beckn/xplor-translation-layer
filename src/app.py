@@ -50,14 +50,6 @@ def date_check():
     """
     
     return {"date": current_datetime}
-@app.get("/supported_languages", tags=["supportingLanguages"])
-def get_supported_languages():
-    """
-    Endpoint to get the list of all supported languages along with their ISO codes.
-    """
-    from src.py.utils import argos_languages, bhashini_languages
-    supported_languages = {**argos_languages, **bhashini_languages}
-    return {"supported_languages": supported_languages}
 
 
 #################################################################################################################
@@ -93,54 +85,14 @@ async def generate_api_key_route(user_id: str):
 #                                   Translate                                                                   #
 #################################################################################################################
 
-@app.get("/language_list/", tags=["translation"])
-def lang_list(credentials: Dict[str, str] = Depends(check_api_key)):
-    '''
-    Get all the languages supported
-    '''
-    return {
-  "argos_languages": {
-    "Arabic": "ar",
-    "Chinese": "zh",
-    "English": "en",
-    "French": "fr",
-    "German": "de",
-    "Italian": "it",
-    "Japanese": "ja",
-    "Polish": "pl",
-    "Portuguese": "pt",
-    "Turkish": "tr",
-    "Russian": "ru",
-    "Spanish": "es"
-  },
-  "bhashini_languages": {
-    "English": "en",
-    "Hindi": "hi",
-    "Gom": "gom",
-    "Kannada": "kn",
-    "Dogri": "doi",
-    "Bodo": "brx",
-    "Urdu": "ur",
-    "Tamil": "ta",
-    "Kashmiri": "ks",
-    "Assamese": "as",
-    "Bengali": "bn",
-    "Marathi": "mr",
-    "Sindhi": "sd",
-    "Maithili": "mai",
-    "Punjabi": "pa",
-    "Malayalam": "ml",
-    "Manipuri": "mni",
-    "Telugu": "te",
-    "Sanskrit": "sa",
-    "Nepali": "ne",
-    "Santali": "sat",
-    "Gujarati": "gu",
-    "Odia": "or"
-  }
-}
-
-
+@app.get("/supported_languages", tags=["supportingLanguages"])
+def get_supported_languages(credentials: Dict[str, str] = Depends(check_api_key)):
+    """
+    Endpoint to get the list of all supported languages along with their ISO codes.
+    """
+    from src.py.utils import argos_languages, bhashini_languages
+    supported_languages = {**argos_languages, **bhashini_languages}
+    return {"supported_languages": supported_languages}
 
 
 ################################################################################################################
