@@ -304,7 +304,6 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
     Returns:
         dict: A dictionary with the status code, message, and translated text or error info.
     """
-    print("bhasini")
     url = 'https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline'
     headers = {
         "Content-Type": "application/json",
