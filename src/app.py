@@ -10,6 +10,7 @@ from typing import Union
 import sys
 sys.path.append('src/py/.')
 from translation import *
+from rec_sys import *
 
 
 app = FastAPI(
@@ -22,9 +23,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redocs",
     openapi_url="/api/v1/openapi.json",
-    openapi_tags=[{"name": "healthcheck", "description": "Healthcheck operations"},
-                  {"name": "translation", "description": "Translation operations"},
-                  {"name": "supportingLanguages", "description": "Supported languages"}]
+    openapi_tags=[{"name": "Healthcheck", "description": "Healthcheck operations"},
+                  {"name": "Translation", "description": "Translation operations"},
+                  {"name": "Rec_Sys", "description": "Recommender System"}]
 )
 
 
@@ -34,7 +35,7 @@ PRIVATE_KEY = "da98faf9sf3qF0A9FSAsdfadsf5sdf78f90as0f8df6dsg432f32s5D8F7SA9DR6G
 #################################################################################################################
 #                                   Health Check                                                                #
 #################################################################################################################
-@app.get("/healthcheck", tags=["healthcheck"])
+@app.get("/healthcheck", tags=["Healthcheck"])
 def health_check():
     """
     Health check endpoint to verify the status of the application.
@@ -43,7 +44,7 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.get("/datecheck", tags=["healthcheck"])
+@app.get("/datecheck", tags=["Healthcheck"])
 def date_check():
     """
     Health check endpoint to verify the status of the application.
@@ -85,7 +86,7 @@ async def generate_api_key_route(user_id: str):
 #                                   Translate                                                                   #
 #################################################################################################################
 
-@app.get("/supported_languages", tags=["supportingLanguages"])
+@app.get("/supported_languages", tags=["Translation"])
 #def get_supported_languages(credentials: Dict[str, str] = Depends(check_api_key)):
 def get_supported_languages():
     """
@@ -103,7 +104,7 @@ class TranslationRequest(BaseModel):
     to_ln: str
 
 
-@app.post("/translate/", tags=["translation"])
+@app.post("/translate/", tags=["Translation"])
 #def translate(request: TranslationRequest, credentials: Dict[str, str] = Depends(check_api_key)):
 def translate(request: TranslationRequest):
     """
@@ -114,3 +115,22 @@ def translate(request: TranslationRequest):
     if isinstance(translated_text, str) and translated_text.startswith("Required translation package could not be installed"):
         raise HTTPException(status_code=500, detail="Translation package installation failed.")
     return {"translated_text": translated_text}
+
+#################################################################################################################
+#                                   RecSys                                                                      #
+#################################################################################################################
+
+class RecsysRequest(BaseModel):
+    text: dict
+    type: str
+
+
+@app.post("/recsys/", tags=["Rec_Sys"])
+#def recsys_route(request: RecsysRequest, credentials: Dict[str, str] = Depends(check_api_key)):
+def recsys_route(request: RecsysRequest):
+    """
+    Translates the provided text from the source language to the target language.
+    Accepts both plain text and JSON as input.
+    """
+    recsys_op = rec_sys_input(request.text, request.type)
+    return recsys_op.to_dict()
