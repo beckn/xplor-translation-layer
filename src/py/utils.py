@@ -5,6 +5,7 @@ import logging
 import requests
 import time
 from datetime import datetime
+from pandas import json_normalize
 import argostranslate.package
 import argostranslate.translate
 import pandas as pd
@@ -356,3 +357,147 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
     translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
 #####
     return translated_content
+
+
+
+#############################################################################################################
+#############################################################################################################
+#                                   UTILS FOR REC SYS MODULE                                                #
+#############################################################################################################
+#############################################################################################################
+
+true = True
+false = False
+
+def extract_course_data_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Extract data from 'course' key in the JSON
+    if 'course' in data['data']:
+        course_data = data['data']['course']
+        # Check if 'providers' exist in course data
+        if 'message' in course_data and 'catalog' in course_data['message'] and 'providers' in course_data['message']['catalog']:
+            for provider in course_data['message']['catalog']['providers']:
+                # Normalize the item data
+                if 'items' in provider:
+                    # Include meta data with new prefixes to avoid conflicts
+                    items_df = json_normalize(provider, record_path=['items'],
+                                              meta=[['descriptor', 'name'], ['descriptor', 'short_desc'],
+                                                    ['descriptor', 'long_desc'], ['descriptor', 'images']],
+                                              meta_prefix='provider_',
+                                              errors='ignore')
+                    # Handling complex fields like price, creator information, and tags
+                    items_df['price.currency'] = items_df['price.currency']
+                    items_df['price.value'] = items_df['price.value']
+                    items_df['creator.name'] = items_df['creator.descriptor.name']
+                    items_df['creator.short_desc'] = items_df['creator.descriptor.short_desc']
+                    items_df['creator.long_desc'] = items_df['creator.descriptor.long_desc']
+                    # Drop unneeded columns
+                    items_df.drop(columns=['creator.descriptor.name', 'creator.descriptor.short_desc', 'creator.descriptor.long_desc'], inplace=True)
+                    # Expand the tags list into separate columns
+                    if 'tags' in items_df.columns:
+                        tags_df = items_df['tags'].apply(lambda x: {t['descriptor']['name']: t['list'][0]['value'] for t in x if 'list' in t})
+                        tags_df = pd.json_normalize(tags_df)
+                        # Combine the tag details back to the main DataFrame
+                        items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+                    # Append to the final DataFrame
+                    df_final = pd.concat([df_final, items_df], ignore_index=True)
+                    df_final['price.value'] = pd.to_numeric(df_final['price.value'], errors='coerce')
+                    df_final['rating'] = pd.to_numeric(df_final['rating'], errors='coerce')
+    return df_final
+
+
+
+def extract_job_data_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Extract data from 'message' key in the JSON
+    if 'message' in data and 'catalog' in data['message'] and 'providers' in data['message']['catalog']:
+        for provider in data['message']['catalog']['providers']:
+            # Normalize the item data within each provider
+            if 'items' in provider:
+                items_df = json_normalize(provider, record_path='items',
+                                          meta=[['descriptor', 'name'], ['descriptor', 'short_desc'],
+                                                'id'],
+                                          meta_prefix='provider_',
+                                          errors='ignore')
+                # Flatten details like media, tags, etc.
+                items_df['provider_images'] = provider['descriptor']['images'][0]['url']  # Assuming there's at least one image
+                # Handling the nested 'tags' structure
+                if 'tags' in items_df.columns:
+                    tags_expanded = items_df['tags'].apply(lambda x: {t['descriptor']['name']: t['list'][0]['value'] for t in x if 'list' in t})
+                    tags_df = pd.json_normalize(tags_expanded)
+                    # Combine the tag details back to the main DataFrame
+                    items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+                # Append to the final DataFrame
+                df_final = pd.concat([df_final, items_df], ignore_index=True)
+                df_final['quantity.available.count'] = pd.to_numeric(df_final['quantity.available.count'], errors='coerce')
+                df_final['Salary information'] = pd.to_numeric(df_final['Salary information'], errors='coerce')
+    return df_final
+
+
+def extract_scholarship_data_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Navigate through the data structure to the providers level
+    if 'message' in data and 'catalog' in data['message'] and 'providers' in data['message']['catalog']:
+        for provider in data['message']['catalog']['providers']:
+            # Normalize the item data within each provider
+            if 'items' in provider:
+                items_df = json_normalize(
+                    provider['items'],
+                    meta=[['descriptor', 'name'], ['descriptor', 'short_desc'],
+                          ['descriptor', 'images'], 'id'],
+                    record_prefix='item_',
+                    errors='ignore'
+                )
+                # Extract details for each item, such as price and tags
+                items_df['price.currency'] = items_df['price.currency'].apply(lambda x: x if isinstance(x, str) else '')
+                items_df['price.value'] = items_df['price.value'].apply(lambda x: x if isinstance(x, str) else '')
+                # Flatten the nested 'tags' structure
+                if 'tags' in items_df.columns:
+                    tags_expanded = items_df['tags'].apply(lambda x: {t['descriptor']['name']: t['list'][0]['value'] for t in x if 'list' in t})
+                    tags_df = pd.json_normalize(tags_expanded)
+                    # Combine the tag details back to the main DataFrame
+                    items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+                # Append to the final DataFrame
+                df_final = pd.concat([df_final, items_df], ignore_index=True)
+    return df_final
+
+
+
+def extract_ondc_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Extract data for each provider
+    for provider in data['message']['catalog']['providers']:
+        # Normalize the item data
+        if 'items' in provider:
+            # Include meta data with new prefixes to avoid conflicts
+            items_df = json_normalize(provider, record_path=['items'],
+                                      meta=[['descriptor', 'name'], ['descriptor', 'symbol'],
+                                            ['descriptor', 'short_desc'], ['descriptor', 'long_desc'],
+                                            ['descriptor', 'images'], 'id'],
+                                      meta_prefix='provider_',
+                                      errors='ignore')
+            # Flatten details like quantity, price, etc.
+            items_df['quantity.unit'] = items_df['quantity.unitized.measure.unit']
+            items_df['quantity.value'] = items_df['quantity.unitized.measure.value']
+            items_df['quantity.available'] = items_df['quantity.available.count']
+            items_df['quantity.maximum'] = items_df['quantity.maximum.count']
+            items_df['price.currency'] = items_df['price.currency']
+            items_df['price.value'] = items_df['price.value']
+            items_df['price.maximum_value'] = items_df['price.maximum_value']
+            # Drop unneeded columns
+            items_df.drop(columns=['quantity.unitized.measure.unit', 'quantity.unitized.measure.value',
+                                   'quantity.available.count', 'quantity.maximum.count'], inplace=True)
+            # Expand the tags list into separate columns
+            if 'tags' in items_df.columns:
+                tags_df = items_df['tags'].apply(lambda x: {item['title']: item['list'][0]['value'] for item in x if 'list' in item})
+                tags_df = pd.json_normalize(tags_df)
+                # Combine the tag details back to the main DataFrame
+                items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+            # Append to the final DataFrame
+            df_final = pd.concat([df_final, items_df], ignore_index=True)
+            df_final['rating'] = pd.to_numeric(df_final['rating'], errors='coerce')
+    return df_final
