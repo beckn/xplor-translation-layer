@@ -1,10 +1,10 @@
-## File for the Translation Service
+# File for the Translation Service
+from utils import *
 import json
 from typing import Union
 
 import sys
 sys.path.append('.')
-from utils import *
 
 
 @log_function_data
@@ -39,23 +39,33 @@ def translate_input(input_data: Union[str, dict], from_ln: str, to_ln: str) -> U
         # Check and install the translation package if necessary
         if not install_translation_package(from_code, to_code):
             return "Required translation package could not be installed."
-        translate_item = lambda text: translate_text(text, from_code, to_code)
+
+        def translate_item(text): return translate_text(
+            text, from_code, to_code)
     elif service == "bhashini":
-        translate_item = lambda text: bhashini_translate(text, from_code, to_code)
+        def translate_item(text): return bhashini_translate(
+            text, from_code, to_code)
     elif service == "a_b":
         if not install_translation_package(from_code, 'en'):
             return "Required translation package could not be installed."
-        translate_item = lambda text: bhashini_translate(translate_text(text, from_code, 'en'), 'en', to_code)
+
+        def translate_item(text): return bhashini_translate(
+            translate_text(text, from_code, 'en'), 'en', to_code)
     elif service == "b_a":
         if not install_translation_package('en', to_code):
             return "Required translation package could not be installed."
-        translate_item = lambda text: translate_text(bhashini_translate(text, from_code, 'en'), 'en', to_code)
+
+        def translate_item(text): return translate_text(
+            bhashini_translate(text, from_code, 'en'), 'en', to_code)
     else:
         return "Unsupported language combination for translation"
     # Handle different types of input
     if isinstance(input_data, str):
+        input_data = input_data.lower()
         return translate_item(input_data)
     elif isinstance(input_data, dict):
+        input_data = {key.lower(): value.lower()
+                      for key, value in input_data.items()}
         # Assume the dict is in JSON format and translate each value
         return {key: translate_item(value) for key, value in input_data.items()}
     else:
