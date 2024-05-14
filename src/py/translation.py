@@ -64,7 +64,7 @@ def translate_input(input_data: Union[str, dict], from_ln: str, to_ln: str) -> U
         input_data = input_data.lower()
         return translate_item(input_data)
     elif isinstance(input_data, dict):
-        input_data = {key.lower(): value.lower()
+        input_data = {key: value.lower() if isinstance(value, str) else value
                       for key, value in input_data.items()}
         # Assume the dict is in JSON format and translate each value
         return {key: translate_item(value) for key, value in input_data.items()}
