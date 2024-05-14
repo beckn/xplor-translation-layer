@@ -10,6 +10,7 @@ build:
     - gcp_dev
   script:
     - echo "$xplor_json_key" >> key.json
+    - gcloud config set account $xp_account
     - cat key.json | docker login -u _json_key --password-stdin https://asia.gcr.io
     - docker build --platform=linux/amd64 --pull -t "asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA" .
     - docker push asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:$CI_COMMIT_SHORT_SHA
@@ -26,7 +27,7 @@ deploy:
   script:
     - cat $WITS_PEM_KEY >> wits.pem
     - cat $WITS_PRIV_KEY >> wits.key
-
+    - gcloud config set account $xp_account
     ## Creating Namespace
     - kubectl apply -f namespace.yaml
 
