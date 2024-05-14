@@ -27,6 +27,8 @@ deploy:
   script:
     - cat $WITS_PEM_KEY >> wits.pem
     - cat $WITS_PRIV_KEY >> wits.key
+    - echo "$xplor_json_key" >> key.json
+    - gcloud auth activate-service-account --key-file=key.json
     - gcloud config set account $xp_account
     ## Creating Namespace
     - kubectl apply -f namespace.yaml
