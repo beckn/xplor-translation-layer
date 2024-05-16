@@ -6,6 +6,7 @@ metadata:
   namespace: "dev-translator"
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "xplor-static-ip"
+    networking.gke.io/timeout: "150s"
 spec:
   tls:
   - hosts:
