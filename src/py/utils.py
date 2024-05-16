@@ -9,6 +9,7 @@ from pandas import json_normalize
 import argostranslate.package
 import argostranslate.translate
 import pandas as pd
+from typing import Union, List, Dict
 from functools import lru_cache, wraps
 from config import *
 import warnings
@@ -264,8 +265,8 @@ def install_translation_package(from_code : str = "en", to_code : str = None ) -
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
-def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str:
+#@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def translate_text(text: Union[str, dict], from_code: str = "en", to_code: str = "pt") -> Union[str, dict]:
     """
     Translates the given text from the source language to the target language using
     Argos Translate, with caching to avoid retranslating the same text.
@@ -296,7 +297,10 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
     translate = from_lang.get_translation(to_lang)
 
     # Translate text
-    translated_text = translate.translate(text)
+    if isinstance(text, str):
+        translated_text = translate.translate(text)
+    elif isinstance(text, dict):
+        translated_text = {key: translate.translate(value) for key, value in text.items()}
 
     return translated_text
 
@@ -308,8 +312,8 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
-def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> dict:
+#@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def bhashini_translate(text: Union[str, Dict[str, str]], from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> Union[str, Dict[str, str]]:
     """Translates text from source language to target language using the Bhashini API.
     Args:
         text (str): The text to translate.
@@ -344,9 +348,16 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
         response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["name"]: response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["value"]
     }
 #####
+    if isinstance(text, str):
+        input_payload = {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+    elif isinstance(text, dict):
+        input_payload = {"input": [{"source": value} for value in text.values()], "audio": [{"audioContent": None}]}
+    else:
+        return {"status_code": 400, "message": "Invalid input data type", "translated_content": None}
+#####
     compute_payload = {
         "pipelineTasks": [{"taskType": "translation", "config": {"language": {"sourceLanguage": from_code, "targetLanguage": to_code}, "serviceId": service_id}}],
-        "inputData": {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+        "inputData": input_payload
     }
 #####
     compute_response = requests.post(callback_url, json=compute_payload, headers=headers2)
@@ -354,7 +365,15 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
         return "Error in translation"
 #####
     compute_response_data = compute_response.json()
-    translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+
+    #translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+    if isinstance(text, str):
+        translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+    elif isinstance(text, dict):
+        translated_content = {
+            key: compute_response_data["pipelineResponse"][0]["output"][i]["target"]
+            for i, key in enumerate(text.keys())
+        }
 #####
     return translated_content
 
