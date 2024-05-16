@@ -7,7 +7,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "xplor-static-ip"
     networking.gke.io/timeout: "90s"
-    networking.gke.io/backend-config: '{"5000": "translator-backendconfig"}'
+    networking.gke.io/backend-config: '{"default": "translator-backendconfig"}'
 spec:
   tls:
   - hosts:
