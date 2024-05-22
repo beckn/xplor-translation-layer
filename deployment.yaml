@@ -3,7 +3,14 @@ apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
   name: translator-backendconfig
+  namespace: dev-translator
 spec:
+  healthCheck:
+    checkIntervalSec: 15
+    timeoutSec: 25
+    port: 8000
+    type: HTTP
+    requestPath: /healthcheck
   timeoutSec: 60
   connectionDraining:
     drainingTimeoutSec: 90
@@ -84,8 +91,7 @@ metadata:
   name: translator-svc
   namespace: dev-translator
   annotations:
-    cloud.google.com/backend-config: '{"ports": {"5000":"translator-backendconfig"}}'
-    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/backend-config: '{"default": "translator-backendconfig"}'
 spec:
   ports:
   - port: 5000
