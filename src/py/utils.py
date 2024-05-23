@@ -9,8 +9,10 @@ from pandas import json_normalize
 import argostranslate.package
 import argostranslate.translate
 import pandas as pd
+from typing import Union, List, Dict
 from functools import lru_cache, wraps
 from config import *
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -25,7 +27,6 @@ ulcaApiKey = bhashini_ulcaApiKey
 #                                   UTILS FOR General Purpose                                               #
 #############################################################################################################
 #############################################################################################################
-
 
 
 # Configure logging
@@ -128,6 +129,31 @@ bhashini_languages = {
 
 #############################################################################################################
 
+def get_supported_languages():
+    argostranslate.package.update_package_index()
+    available_packages = argostranslate.package.get_available_packages()
+    languages = set()
+    for package in available_packages:
+        languages.add(package.from_code)
+        languages.add(package.to_code)
+    return sorted(languages)
+
+supported_languages = get_supported_languages()
+################################################################################################################
+
+def get_packages_directory():
+    if os.name == 'nt':  # Windows
+        packages_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'argos-translate', 'packages')
+    else:  # Linux, Mac, etc.
+        packages_dir = os.path.join(os.getenv('HOME'), '.local', 'share', 'argos-translate', 'packages')
+    return packages_dir
+
+
+def get_installed_packages():
+    print(argostranslate.package.get_installed_packages())
+
+
+################################################################################################################
 def get_language_code(input_language):
     """
     Retrieves the ISO language code for a given language name or code. This function supports
@@ -208,10 +234,45 @@ def select_translation_service(from_code, to_code):
 
 
 
+
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)
+def install_all_en_packages():
+    # Update the Argos Translate package index to get the latest list of available packages
+    argostranslate.package.update_package_index()
+    
+    # Get the list of available translation packages
+    available_packages = argostranslate.package.get_available_packages()
+    
+    # Filter the packages to only include those with 'en' as the source language
+    en_packages = [
+        package for package in available_packages if package.from_code == 'en' and package.to_code in argos_languages.values()
+    ]
+    
+    # Get the list of installed translation packages
+    installed_packages = argostranslate.package.get_installed_packages()
+    
+    # Create a set of installed package IDs for quick lookup
+    installed_package_ids = {
+        (package.from_code, package.to_code) for package in installed_packages
+    }
+    
+    # Iterate over the filtered packages
+    for package in en_packages:
+        package_id = (package.from_code, package.to_code)
+        if package_id not in installed_package_ids:
+            print(f"Attempting to install package: {package_id}")
+            package_path = package.download()
+            argostranslate.package.install_from_path(package_path)
+            print(f"Successfully installed package: {package_id}")
+        else:
+            print(f"Package {package_id} is already installed.")
+install_all_en_packages()
+#############################################################################################################
+
+
+#@lru_cache(maxsize=128)
 def install_translation_package(from_code : str = "en", to_code : str = None ) -> bool:
     """
     Attempts to install a translation package for Argos Translate, given a source
@@ -235,6 +296,13 @@ def install_translation_package(from_code : str = "en", to_code : str = None ) -
 
     # Generate a unique identifier for the language pair
     package_id = f"{from_code}-{to_code}"
+
+    # Check if the package is already installed
+    installed_packages = argostranslate.package.get_installed_packages()
+    for package in installed_packages:
+        if package.from_code == from_code and package.to_code == to_code:
+            print(f"Package {package_id} is already installed.")
+            return True  # Package already installed
 
     # Update the Argos Translate package index
     argostranslate.package.update_package_index()
@@ -264,8 +332,8 @@ def install_translation_package(from_code : str = "en", to_code : str = None ) -
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
-def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str:
+#@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def translate_text(text: Union[str, dict], from_code: str = "en", to_code: str = "pt") -> Union[str, dict]:
     """
     Translates the given text from the source language to the target language using
     Argos Translate, with caching to avoid retranslating the same text.
@@ -296,7 +364,10 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
     translate = from_lang.get_translation(to_lang)
 
     # Translate text
-    translated_text = translate.translate(text)
+    if isinstance(text, str):
+        translated_text = translate.translate(text)
+    elif isinstance(text, dict):
+        translated_text = {key: translate.translate(value) for key, value in text.items()}
 
     return translated_text
 
@@ -308,8 +379,8 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
-def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> dict:
+#@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def bhashini_translate(text: Union[str, Dict[str, str]], from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> Union[str, Dict[str, str]]:
     """Translates text from source language to target language using the Bhashini API.
     Args:
         text (str): The text to translate.
@@ -344,9 +415,16 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
         response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["name"]: response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["value"]
     }
 #####
+    if isinstance(text, str):
+        input_payload = {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+    elif isinstance(text, dict):
+        input_payload = {"input": [{"source": value} for value in text.values()], "audio": [{"audioContent": None}]}
+    else:
+        return {"status_code": 400, "message": "Invalid input data type", "translated_content": None}
+#####
     compute_payload = {
         "pipelineTasks": [{"taskType": "translation", "config": {"language": {"sourceLanguage": from_code, "targetLanguage": to_code}, "serviceId": service_id}}],
-        "inputData": {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+        "inputData": input_payload
     }
 #####
     compute_response = requests.post(callback_url, json=compute_payload, headers=headers2)
@@ -354,7 +432,15 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
         return "Error in translation"
 #####
     compute_response_data = compute_response.json()
-    translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+
+    #translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+    if isinstance(text, str):
+        translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+    elif isinstance(text, dict):
+        translated_content = {
+            key: compute_response_data["pipelineResponse"][0]["output"][i]["target"]
+            for i, key in enumerate(text.keys())
+        }
 #####
     return translated_content
 

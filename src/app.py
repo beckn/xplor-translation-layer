@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security.api_key import APIKeyQuery, APIKeyHeader, APIKey
-from typing import Dict
+from typing import Dict, List
 from hashlib import sha256
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
@@ -99,7 +99,7 @@ def get_supported_languages():
 
 ################################################################################################################
 class TranslationRequest(BaseModel):
-    text: Union[str, dict]
+    text: Union[str, Dict[str, str], List[Union[str, Dict[str, str]]]]
     from_ln: str
     to_ln: str
 
