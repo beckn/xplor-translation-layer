@@ -16,7 +16,7 @@ spec:
         app: dev-translator-backend
     spec:
       containers:
-      - image: asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:e47084e2 # latest
+      - image: asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:latest
         imagePullPolicy: Always
         name: dev-translator-backend
         resources:
