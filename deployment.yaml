@@ -1,21 +1,4 @@
 ---
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
-metadata:
-  name: translator-backendconfig
-  namespace: dev-translator
-spec:
-  healthCheck:
-    checkIntervalSec: 30
-    timeoutSec: 25
-    port: 8000
-    type: HTTP
-    requestPath: /healthcheck
-  timeoutSec: 90
-  connectionDraining:
-    drainingTimeoutSec: 90
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,7 +16,7 @@ spec:
         app: dev-translator-backend
     spec:
       containers:
-      - image: asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:latest
+      - image: asia-south1-docker.pkg.dev/xplor-sunbird-rc/dev-translator/xplor-ai-services-translator:e47084e2 # latest
         imagePullPolicy: Always
         name: dev-translator-backend
         resources:
@@ -50,13 +33,13 @@ spec:
           httpGet:
             path: /healthcheck
             port: 8000
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /healthcheck
             port: 8000
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 10
 
 ---
@@ -90,8 +73,6 @@ metadata:
     app: dev-translator-backend
   name: translator-svc
   namespace: dev-translator
-  annotations:
-    cloud.google.com/backend-config: '{"default": "translator-backendconfig"}'
 spec:
   ports:
   - port: 5000
