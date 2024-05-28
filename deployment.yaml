@@ -6,7 +6,7 @@ metadata:
   namespace: dev-translator
 spec:
   healthCheck:
-    checkIntervalSec: 15
+    checkIntervalSec: 30
     timeoutSec: 25
     port: 8000
     type: HTTP
@@ -69,7 +69,7 @@ metadata:
   namespace: dev-translator
 spec:
   maxReplicas: 4
-  minReplicas: 2
+  minReplicas: 4
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
