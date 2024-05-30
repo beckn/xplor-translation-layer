@@ -13,7 +13,7 @@ sys.path.append('.')
 #################################################################################################################################
 #################################################################################################################################
 @log_function_data
-def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln: str, to_ln: str) -> Union[str, dict, List[Union[str, dict]]]:
+def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln: str, to_ln: str, excluded_keys: List[str] = None) -> Union[str, dict, List[Union[str, dict]]]:
     """
     Translates the given input text from the source language to the target language.
     The input can be in plain text or JSON (as a dictionary).
@@ -28,7 +28,7 @@ def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln
     Returns:
     - Union[str, dict]: The translated text, in the same format as the input.
     """
-    max_elements = 100
+    max_elements = 50
     # Resolve ISO codes for the languages
     from_code = get_language_code(from_ln)
     to_code = get_language_code(to_ln)
@@ -74,9 +74,16 @@ def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln
         return translate_item(input_data)
 #######################
     elif isinstance(input_data, dict):
+        if excluded_keys is None:
+            excluded_keys = []
         input_data = {key: value.lower() if isinstance(value, str) else str(value) for key, value in input_data.items()}
-        input_data = {key.replace('\n',' '): value.replace('\n',' ') for key, value in input_data.items()}
-        return translate_item(input_data)
+        input_data = {key.replace('\n', ' '): value.replace('\n', ' ') for key, value in input_data.items()}
+
+        excluded_data = {key: value.lower() if isinstance(value,str) else str(value) for key, value in input_data.items() if key in excluded_keys}
+        excluded_data = {key.replace('\n', ' '): value.replace('\n', ' ') for key, value in excluded_data.items()}
+
+        translated_included_data = translate_item(input_data)
+        return {**translated_included_data, **excluded_data}
 #######################
     elif isinstance(input_data, list):
         if len(input_data) > max_elements:
@@ -86,9 +93,14 @@ def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln
             if isinstance(item, str):
                 item = item.lower()
             elif isinstance(item, dict):
+                if excluded_keys is None:
+                    excluded_keys = []
+                excluded_data = {key: value for key, value in item.items() if key in excluded_keys}
                 item = {key: value.lower() if isinstance(value, str) else str(value) for key, value in item.items()}
                 item = {key.replace('\n', ' '): value.replace('\n', ' ') for key, value in item.items()}
-            processed_list.append(translate_item(item))
+                translated_included_data = translate_item(item)
+                modified_data = {**translated_included_data, **excluded_data}
+            processed_list.append(modified_data)
         return processed_list
 #######################
     else:
