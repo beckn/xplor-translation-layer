@@ -111,6 +111,7 @@ class TranslationRequest(BaseModel):
     from_ln: str
     to_ln: str
     excluded_keys: Optional[List[str]] = []
+    useAsync: Optional[bool] = False
 
 
 @app.post("/translate/", tags=["Translation"])
