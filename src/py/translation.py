@@ -2,6 +2,7 @@
 from utils import *
 import json
 from typing import Union, List
+from fastapi import HTTPException
 
 import sys
 sys.path.append('.')
@@ -27,7 +28,7 @@ def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln
     Returns:
     - Union[str, dict]: The translated text, in the same format as the input.
     """
-
+    max_elements = 100
     # Resolve ISO codes for the languages
     from_code = get_language_code(from_ln)
     to_code = get_language_code(to_ln)
@@ -78,6 +79,8 @@ def translate_input(input_data: Union[str, dict, List[Union[str,dict]]], from_ln
         return translate_item(input_data)
 #######################
     elif isinstance(input_data, list):
+        if len(input_data) > max_elements:
+            raise HTTPException(status_code=400, detail=f"Number of elements in the list exceeds the limit of {max_elements}.")
         processed_list = []
         for item in input_data:
             if isinstance(item, str):
