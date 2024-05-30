@@ -5,7 +5,7 @@ from hashlib import sha256
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional,Union
 
 import sys
 
