@@ -14,7 +14,8 @@ build:
           docker-compose down
           cd /home/ubuntu/ &&  sudo rm -rf xplor-ai-services
         fi "
+    - sshpass -p $XPLOR_TRANSLATOR_PASSWORD ssh $Default_Username@$XPLOR_TRANSLATOR_HOST  "docker image prune -af && docker builder prune -f"
     - sshpass -p $XPLOR_TRANSLATOR_PASSWORD ssh $Default_Username@$XPLOR_TRANSLATOR_HOST  "git clone -b develop https://user:'$GITLAB_ACCESS_TOKEN'@gitlab.thewitslab.com/wil-workspace/xplor/xplor-ai-services.git"
     - sshpass -p $XPLOR_TRANSLATOR_PASSWORD ssh -tt $Default_Username@$XPLOR_TRANSLATOR_HOST  "
         cd /home/ubuntu/xplor-ai-services && docker-compose up -d --build "
-    - echo -e "Dev Translator Backend URL:- https://translator-dev-temp.thewitslab.com/"
+    - echo -e "Dev Translator Backend URL:- https://translator-dev.thewitslab.com/"

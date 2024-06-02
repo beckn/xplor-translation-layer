@@ -7,4 +7,4 @@ services:
       dockerfile: Dockerfile
     container_name: translator-dev
     ports:
-      - "8001:8000"
+      - "8010:8000"
