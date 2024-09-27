@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  translator-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: translator-dev
+    ports:
+      - "8010:8000"

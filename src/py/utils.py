@@ -5,11 +5,14 @@ import logging
 import requests
 import time
 from datetime import datetime
+from pandas import json_normalize
 import argostranslate.package
 import argostranslate.translate
 import pandas as pd
+from typing import Union, List, Dict
 from functools import lru_cache, wraps
 from config import *
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -24,7 +27,6 @@ ulcaApiKey = bhashini_ulcaApiKey
 #                                   UTILS FOR General Purpose                                               #
 #############################################################################################################
 #############################################################################################################
-
 
 
 # Configure logging
@@ -127,6 +129,31 @@ bhashini_languages = {
 
 #############################################################################################################
 
+def get_supported_languages():
+    argostranslate.package.update_package_index()
+    available_packages = argostranslate.package.get_available_packages()
+    languages = set()
+    for package in available_packages:
+        languages.add(package.from_code)
+        languages.add(package.to_code)
+    return sorted(languages)
+
+supported_languages = get_supported_languages()
+################################################################################################################
+
+def get_packages_directory():
+    if os.name == 'nt':  # Windows
+        packages_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'argos-translate', 'packages')
+    else:  # Linux, Mac, etc.
+        packages_dir = os.path.join(os.getenv('HOME'), '.local', 'share', 'argos-translate', 'packages')
+    return packages_dir
+
+
+def get_installed_packages():
+    print(argostranslate.package.get_installed_packages())
+
+
+################################################################################################################
 def get_language_code(input_language):
     """
     Retrieves the ISO language code for a given language name or code. This function supports
@@ -207,10 +234,45 @@ def select_translation_service(from_code, to_code):
 
 
 
+
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)
+def install_all_en_packages():
+    # Update the Argos Translate package index to get the latest list of available packages
+    argostranslate.package.update_package_index()
+    
+    # Get the list of available translation packages
+    available_packages = argostranslate.package.get_available_packages()
+    
+    # Filter the packages to only include those with 'en' as the source language
+    en_packages = [
+        package for package in available_packages if package.from_code == 'en' and package.to_code in argos_languages.values()
+    ]
+    
+    # Get the list of installed translation packages
+    installed_packages = argostranslate.package.get_installed_packages()
+    
+    # Create a set of installed package IDs for quick lookup
+    installed_package_ids = {
+        (package.from_code, package.to_code) for package in installed_packages
+    }
+    
+    # Iterate over the filtered packages
+    for package in en_packages:
+        package_id = (package.from_code, package.to_code)
+        if package_id not in installed_package_ids:
+            print(f"Attempting to install package: {package_id}")
+            package_path = package.download()
+            argostranslate.package.install_from_path(package_path)
+            print(f"Successfully installed package: {package_id}")
+        else:
+            print(f"Package {package_id} is already installed.")
+install_all_en_packages()
+#############################################################################################################
+
+
+#@lru_cache(maxsize=128)
 def install_translation_package(from_code : str = "en", to_code : str = None ) -> bool:
     """
     Attempts to install a translation package for Argos Translate, given a source
@@ -234,6 +296,13 @@ def install_translation_package(from_code : str = "en", to_code : str = None ) -
 
     # Generate a unique identifier for the language pair
     package_id = f"{from_code}-{to_code}"
+
+    # Check if the package is already installed
+    installed_packages = argostranslate.package.get_installed_packages()
+    for package in installed_packages:
+        if package.from_code == from_code and package.to_code == to_code:
+            print(f"Package {package_id} is already installed.")
+            return True  # Package already installed
 
     # Update the Argos Translate package index
     argostranslate.package.update_package_index()
@@ -263,8 +332,8 @@ def install_translation_package(from_code : str = "en", to_code : str = None ) -
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
-def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str:
+#@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def translate_text(text: Union[str, dict], from_code: str = "en", to_code: str = "pt") -> Union[str, dict]:
     """
     Translates the given text from the source language to the target language using
     Argos Translate, with caching to avoid retranslating the same text.
@@ -295,7 +364,10 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
     translate = from_lang.get_translation(to_lang)
 
     # Translate text
-    translated_text = translate.translate(text)
+    if isinstance(text, str):
+        translated_text = translate.translate(text)
+    elif isinstance(text, dict):
+        translated_text = {key: translate.translate(value) for key, value in text.items()}
 
     return translated_text
 
@@ -307,8 +379,8 @@ def translate_text(text: str, from_code: str = "en", to_code: str = "pt") -> str
 #############################################################################################################
 
 
-@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
-def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> dict:
+#@lru_cache(maxsize=128)  # Cache the most recent 128 unique translation requests
+def bhashini_translate(text: Union[str, Dict[str, str]], from_code: str = "en", to_code: str = "te", user_id: str = userID, api_key: str = ulcaApiKey ) -> Union[str, Dict[str, str]]:
     """Translates text from source language to target language using the Bhashini API.
     Args:
         text (str): The text to translate.
@@ -343,9 +415,16 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
         response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["name"]: response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["value"]
     }
 #####
+    if isinstance(text, str):
+        input_payload = {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+    elif isinstance(text, dict):
+        input_payload = {"input": [{"source": value} for value in text.values()], "audio": [{"audioContent": None}]}
+    else:
+        return {"status_code": 400, "message": "Invalid input data type", "translated_content": None}
+#####
     compute_payload = {
         "pipelineTasks": [{"taskType": "translation", "config": {"language": {"sourceLanguage": from_code, "targetLanguage": to_code}, "serviceId": service_id}}],
-        "inputData": {"input": [{"source": text}], "audio": [{"audioContent": None}]}
+        "inputData": input_payload
     }
 #####
     compute_response = requests.post(callback_url, json=compute_payload, headers=headers2)
@@ -353,6 +432,158 @@ def bhashini_translate(text: str, from_code: str = "en", to_code: str = "te", us
         return "Error in translation"
 #####
     compute_response_data = compute_response.json()
-    translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+
+    #translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+    if isinstance(text, str):
+        translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+    elif isinstance(text, dict):
+        translated_content = {
+            key: compute_response_data["pipelineResponse"][0]["output"][i]["target"]
+            for i, key in enumerate(text.keys())
+        }
 #####
     return translated_content
+
+
+
+#############################################################################################################
+#############################################################################################################
+#                                   UTILS FOR REC SYS MODULE                                                #
+#############################################################################################################
+#############################################################################################################
+
+true = True
+false = False
+
+def extract_course_data_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Extract data from 'course' key in the JSON
+    if 'course' in data['data']:
+        course_data = data['data']['course']
+        # Check if 'providers' exist in course data
+        if 'message' in course_data and 'catalog' in course_data['message'] and 'providers' in course_data['message']['catalog']:
+            for provider in course_data['message']['catalog']['providers']:
+                # Normalize the item data
+                if 'items' in provider:
+                    # Include meta data with new prefixes to avoid conflicts
+                    items_df = json_normalize(provider, record_path=['items'],
+                                              meta=[['descriptor', 'name'], ['descriptor', 'short_desc'],
+                                                    ['descriptor', 'long_desc'], ['descriptor', 'images']],
+                                              meta_prefix='provider_',
+                                              errors='ignore')
+                    # Handling complex fields like price, creator information, and tags
+                    items_df['price.currency'] = items_df['price.currency']
+                    items_df['price.value'] = items_df['price.value']
+                    items_df['creator.name'] = items_df['creator.descriptor.name']
+                    items_df['creator.short_desc'] = items_df['creator.descriptor.short_desc']
+                    items_df['creator.long_desc'] = items_df['creator.descriptor.long_desc']
+                    # Drop unneeded columns
+                    items_df.drop(columns=['creator.descriptor.name', 'creator.descriptor.short_desc', 'creator.descriptor.long_desc'], inplace=True)
+                    # Expand the tags list into separate columns
+                    if 'tags' in items_df.columns:
+                        tags_df = items_df['tags'].apply(lambda x: {t['descriptor']['name']: t['list'][0]['value'] for t in x if 'list' in t})
+                        tags_df = pd.json_normalize(tags_df)
+                        # Combine the tag details back to the main DataFrame
+                        items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+                    # Append to the final DataFrame
+                    df_final = pd.concat([df_final, items_df], ignore_index=True)
+                    df_final['price.value'] = pd.to_numeric(df_final['price.value'], errors='coerce')
+                    df_final['rating'] = pd.to_numeric(df_final['rating'], errors='coerce')
+    return df_final
+
+
+
+def extract_job_data_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Extract data from 'message' key in the JSON
+    if 'message' in data and 'catalog' in data['message'] and 'providers' in data['message']['catalog']:
+        for provider in data['message']['catalog']['providers']:
+            # Normalize the item data within each provider
+            if 'items' in provider:
+                items_df = json_normalize(provider, record_path='items',
+                                          meta=[['descriptor', 'name'], ['descriptor', 'short_desc'],
+                                                'id'],
+                                          meta_prefix='provider_',
+                                          errors='ignore')
+                # Flatten details like media, tags, etc.
+                items_df['provider_images'] = provider['descriptor']['images'][0]['url']  # Assuming there's at least one image
+                # Handling the nested 'tags' structure
+                if 'tags' in items_df.columns:
+                    tags_expanded = items_df['tags'].apply(lambda x: {t['descriptor']['name']: t['list'][0]['value'] for t in x if 'list' in t})
+                    tags_df = pd.json_normalize(tags_expanded)
+                    # Combine the tag details back to the main DataFrame
+                    items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+                # Append to the final DataFrame
+                df_final = pd.concat([df_final, items_df], ignore_index=True)
+                df_final['quantity.available.count'] = pd.to_numeric(df_final['quantity.available.count'], errors='coerce')
+                df_final['Salary information'] = pd.to_numeric(df_final['Salary information'], errors='coerce')
+    return df_final
+
+
+def extract_scholarship_data_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Navigate through the data structure to the providers level
+    if 'message' in data and 'catalog' in data['message'] and 'providers' in data['message']['catalog']:
+        for provider in data['message']['catalog']['providers']:
+            # Normalize the item data within each provider
+            if 'items' in provider:
+                items_df = json_normalize(
+                    provider['items'],
+                    meta=[['descriptor', 'name'], ['descriptor', 'short_desc'],
+                          ['descriptor', 'images'], 'id'],
+                    record_prefix='item_',
+                    errors='ignore'
+                )
+                # Extract details for each item, such as price and tags
+                items_df['price.currency'] = items_df['price.currency'].apply(lambda x: x if isinstance(x, str) else '')
+                items_df['price.value'] = items_df['price.value'].apply(lambda x: x if isinstance(x, str) else '')
+                # Flatten the nested 'tags' structure
+                if 'tags' in items_df.columns:
+                    tags_expanded = items_df['tags'].apply(lambda x: {t['descriptor']['name']: t['list'][0]['value'] for t in x if 'list' in t})
+                    tags_df = pd.json_normalize(tags_expanded)
+                    # Combine the tag details back to the main DataFrame
+                    items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+                # Append to the final DataFrame
+                df_final = pd.concat([df_final, items_df], ignore_index=True)
+    return df_final
+
+
+
+def extract_ondc_to_df(data):
+    # Initialize an empty DataFrame to hold the extracted data
+    df_final = pd.DataFrame()
+    # Extract data for each provider
+    for provider in data['message']['catalog']['providers']:
+        # Normalize the item data
+        if 'items' in provider:
+            # Include meta data with new prefixes to avoid conflicts
+            items_df = json_normalize(provider, record_path=['items'],
+                                      meta=[['descriptor', 'name'], ['descriptor', 'symbol'],
+                                            ['descriptor', 'short_desc'], ['descriptor', 'long_desc'],
+                                            ['descriptor', 'images'], 'id'],
+                                      meta_prefix='provider_',
+                                      errors='ignore')
+            # Flatten details like quantity, price, etc.
+            items_df['quantity.unit'] = items_df['quantity.unitized.measure.unit']
+            items_df['quantity.value'] = items_df['quantity.unitized.measure.value']
+            items_df['quantity.available'] = items_df['quantity.available.count']
+            items_df['quantity.maximum'] = items_df['quantity.maximum.count']
+            items_df['price.currency'] = items_df['price.currency']
+            items_df['price.value'] = items_df['price.value']
+            items_df['price.maximum_value'] = items_df['price.maximum_value']
+            # Drop unneeded columns
+            items_df.drop(columns=['quantity.unitized.measure.unit', 'quantity.unitized.measure.value',
+                                   'quantity.available.count', 'quantity.maximum.count'], inplace=True)
+            # Expand the tags list into separate columns
+            if 'tags' in items_df.columns:
+                tags_df = items_df['tags'].apply(lambda x: {item['title']: item['list'][0]['value'] for item in x if 'list' in item})
+                tags_df = pd.json_normalize(tags_df)
+                # Combine the tag details back to the main DataFrame
+                items_df = pd.concat([items_df.drop(columns=['tags']), tags_df], axis=1)
+            # Append to the final DataFrame
+            df_final = pd.concat([df_final, items_df], ignore_index=True)
+            df_final['rating'] = pd.to_numeric(df_final['rating'], errors='coerce')
+    return df_final
